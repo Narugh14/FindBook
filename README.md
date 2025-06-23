@@ -79,13 +79,12 @@ findbook:
 ```
 ## 🧪 Ejecución en IDE
 Ejecuta la clase principal: com.narugh.findbook.FindBookApplication con argumentos:
-
-text
+```
 --title "Cien años de soledad"
+```
 
 ## 🌳 Estructura del Proyecto
 ```
-text
 src/
 ├── main/
 │   ├── java/
