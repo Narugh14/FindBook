@@ -6,6 +6,9 @@ import com.montelongo.FindBook.repository.IAutorRepository;
 import com.montelongo.FindBook.repository.ILibroRepository;
 import com.montelongo.FindBook.service.ConsumoAPI;
 import com.montelongo.FindBook.service.ConvertirDatos;
+
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -57,20 +60,19 @@ public class Principal {
                     buscarLibroPorTitulo();
                     break;
                 case 2:
-                    //Consulta libros registrados
-
+                    listarLibrosRegistrados();
                     break;
                 case 3:
-                    //Consultar autores registrados
+                    listarAutoresRegistrados();
                     break;
                 case 4:
-                   //Consultar lista de autores vivos en determinado año
+                    listarAutoresPorAño();
                     break;
                 case 5:
-                    //Consultar lista de libros por idiomas
+                    listarLibrosPorIdiomas();
                     break;
                 case 6:
-                    //Consultar Top 10 Mejores libros
+                    top10MejoresLibros();
                     break;
                 case 0:
                     System.out.println("Cerrando aplicación");
@@ -128,5 +130,113 @@ public class Principal {
             return null;
         }
   }
+    private void listarLibrosRegistrados() {
+        List<Libro> libros = libroRepository.findAll();
+        if (libros.isEmpty()) {
+            System.out.println("No hay libros registrados");
+            return;
+        }
+        System.out.println("----- LOS LIBROS REGISTRADOS SON: -----\n");
+        libros.stream()
+                .sorted(Comparator.comparing(Libro::getTitulo))
+                .forEach(System.out::println);
+    }
+    private void listarAutoresRegistrados() {
+        List<Autor> autores = autorRepository.findAll();
+        if (autores.isEmpty()) {
+            System.out.println("No hay autores registrados");
+            return;
+        }
+        System.out.println("----- LOS AUTORES REGISTRADOS SON: -----\n");
+        autores.stream()
+                .sorted(Comparator.comparing(Autor::getName))
+                .forEach(System.out::println);
+    }
+    private void listarAutoresPorAño() {
+        System.out.println("Escribe el año en el que deseas buscar: ");
+        var año = teclado.nextInt();
+        teclado.nextLine();
+        if(año < 0) {
+            System.out.println("El año no puede ser negativo, intenta de nuevo");
+            return;
+        }
+        List<Autor> autoresPorAño = autorRepository.findByFechaNacimientoLessThanEqualAndFechaMuerteGreaterThanEqual(año, año);
+        if (autoresPorAño.isEmpty()) {
+            System.out.println("No hay autores registrados en ese año");
+            return;
+        }
+        System.out.println("----- LOS AUTORES VIVOS REGISTRADOS EN EL AÑO " + año + " SON: -----\n");
+        autoresPorAño.stream()
+                .sorted(Comparator.comparing(Autor::getName))
+                .forEach(System.out::println);
+    }
+    private void listarLibrosPorIdiomas() {
+        System.out.println("Escribe el idioma por el que deseas buscar: ");
+        String menu = """
+                es - Español
+                en - Inglés
+                fr - Francés
+                pt - Portugués
+                """;
+        System.out.println(menu);
+        var idioma = teclado.nextLine();
+        if (!idioma.equals("es") && !idioma.equals("en") && !idioma.equals("fr") && !idioma.equals("pt")) {
+            System.out.println("Idioma no válido, intenta de nuevo");
+            return;
+        }
+        List<Libro> librosPorIdioma = libroRepository.findByIdiomasContaining(idioma);
+        if (librosPorIdioma.isEmpty()) {
+            System.out.println("No hay libros registrados en ese idioma");
+            return;
+        }
+        System.out.println("----- LOS LIBROS REGISTRADOS EN EL IDIOMA SELECCIONADO SON: -----\n");
+        librosPorIdioma.stream()
+                .sorted(Comparator.comparing(Libro::getTitulo))
+                .forEach(System.out::println);
+    }
+    private void top10MejoresLibros() {
+        System.out.println("De donde quieres obtener los libros más descargados?");
+        String menu = """
+                1 - Gutendex
+                2 - Base de datos
+                """;
+        System.out.println(menu);
+        var opcion = teclado.nextInt();
+        teclado.nextLine();
 
+        if (opcion == 1) {
+            System.out.println("----- LOS 10 LIBROS MÁS DESCARGADOS EN GUTENDEX SON: -----\n");
+            var json = consumoAPI.obtenerDatos(URL_BASE);
+            Datos datos = convierte.obtenerDatos(json, Datos.class);
+            List<Libro> libros = new ArrayList<>();
+            for (DatosLibro datosLibros : datos.result()) {
+
+                if (!datosLibros.authors().isEmpty()) {
+                    Autor autor = new Autor(datosLibros.authors().get(0));
+                    Libro libro = new Libro(datosLibros, autor);
+                    libros.add(libro);
+                } else {
+                    System.out.println("No se encontró autor para el libro: " + datosLibros.title());
+                }
+            }
+            libros.stream()
+                    .sorted(Comparator.comparing(Libro::getNumeroDescargas).reversed())
+                    .limit(10)
+                    .forEach(System.out::println);
+        } else if (opcion == 2) {
+            System.out.println("----- LOS 10 LIBROS MÁS DESCARGADOS EN LA BASE DE DATOS SON: -----\n");
+            List<Libro> libros = libroRepository.findAll();
+            if (libros.isEmpty()) {
+                System.out.println("No hay libros registrados");
+                return;
+            }
+            libros.stream()
+                    .sorted(Comparator.comparing(Libro::getNumeroDescargas).reversed())
+                    .limit(10)
+                    .forEach(System.out::println);
+        } else {
+            System.out.println("Opción no válida, intenta de nuevo");
+        }
+
+    }
 }
