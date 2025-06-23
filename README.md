@@ -11,14 +11,15 @@ Herramienta de línea de comandos (CLI) para buscar información de libros usand
 - Búsqueda de libros por título, autor o ISBN
 - Resultados en formato tabla legible
 - Exportación a JSON/CSV (opcional)
-- Integración con APIs de libros (Ej: Google Books, Open Library)
+- Integración con APIs de libros: Gutendex 
 - Configuración personalizable
 
 ## ⚙️ Prerrequisitos
 
 - Java 17 o superior
 - Maven 3.6+
-- (Opcional) Clave de API para servicios externos
+- Lombok
+- Postgres
 
 ## 🚀 Instalación
 
